@@ -353,6 +353,7 @@ class PushTEnv(gym.Env):
         goal_geom = pymunk_to_shapely(goal_body, self.block.shapes)
         block_geom = pymunk_to_shapely(self.block, self.block.shapes)
 
+        print('block_geom: ', block_geom)
         intersection_area = goal_geom.intersection(block_geom).area
         goal_area = goal_geom.area
         coverage = intersection_area / goal_area
@@ -1118,7 +1119,7 @@ _ = noise_pred_net.to(device)
 #@markdown Takes about an hour. If you don't want to wait, skip to the next cell
 #@markdown to load pre-trained weights
 
-num_epochs = 100
+num_epochs = 10
 
 # Exponential Moving Average
 # accelerates training and improves stability
