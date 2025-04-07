@@ -366,6 +366,10 @@ class PushTEnv(gym.Env):
         goal_geom = pymunk_to_shapely(goal_body, self.block.shapes)
         block_geom = pymunk_to_shapely(self.block, self.block.shapes)
 
+        # fix invalid geometry
+        goal_geom = goal_geom.buffer(0)
+        block_geom = block_geom.buffer(0)
+
         print('block_geom: ', block_geom)
         intersection_area = goal_geom.intersection(block_geom).area
         goal_area = goal_geom.area
