@@ -1159,7 +1159,7 @@ _ = noise_pred_net.to(device)
 # @markdown Takes about an hour. If you don't want to wait, skip to the next cell
 # @markdown to load pre-trained weights
 
-num_epochs = 5
+num_epochs = 100
 
 # Exponential Moving Average
 # accelerates training and improves stability
