@@ -370,7 +370,6 @@ class PushTEnv(gym.Env):
         goal_geom = goal_geom.buffer(0)
         block_geom = block_geom.buffer(0)
 
-        print('block_geom: ', block_geom)
         intersection_area = goal_geom.intersection(block_geom).area
         goal_area = goal_geom.area
         coverage = intersection_area / goal_area
