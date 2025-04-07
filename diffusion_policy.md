@@ -91,3 +91,72 @@
 
 ### **总结**
 该代码通过扩散模型生成连续动作序列，结合物理模拟环境（PushTEnv）实现高效的物体推动策略。其核心创新点在于将扩散过程应用于强化学习的动作生成，通过迭代去噪生成平滑且多样化的动作，显著提升了策略的鲁棒性和泛化能力。
+
+
+
+# 安装
+```
+Traceback (most recent call last):
+  File "/home/libing/source/ml/diffusion_planner/diffusion_policy/diffusion_policy_state_pusht_demo.py", line 43, in <module>
+    import shapely.geometry as sg
+  File "/home/libing/miniconda3/envs/robodiff/lib/python3.11/site-packages/shapely/geometry/__init__.py", line 4, in <module>
+    from .base import CAP_STYLE, JOIN_STYLE
+  File "/home/libing/miniconda3/envs/robodiff/lib/python3.11/site-packages/shapely/geometry/base.py", line 20, in <module>
+    from shapely.coords import CoordinateSequence
+  File "/home/libing/miniconda3/envs/robodiff/lib/python3.11/site-packages/shapely/coords.py", line 10, in <module>
+    from shapely.geos import lgeos
+  File "/home/libing/miniconda3/envs/robodiff/lib/python3.11/site-packages/shapely/geos.py", line 94, in <module>
+    _lgeos = CDLL(os.path.join(sys.prefix, 'lib', 'libgeos_c.so'))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/libing/miniconda3/envs/robodiff/lib/python3.11/ctypes/__init__.py", line 376, in __init__
+    self._handle = _dlopen(self._name, mode)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: /home/libing/miniconda3/envs/robodiff/lib/libgeos_c.so: cannot open shared object file: No such file or directory
+
+```
+
+确认本地是有这些库的, 直接拷贝一份
+```
+locate libgeos_c.so
+/snap/cloudcompare/208/usr/lib/x86_64-linux-gnu/libgeos_c.so.1
+/snap/cloudcompare/208/usr/lib/x86_64-linux-gnu/libgeos_c.so.1.10.2
+/usr/lib/x86_64-linux-gnu/libgeos_c.so
+/usr/lib/x86_64-linux-gnu/libgeos_c.so.1
+/usr/lib/x86_64-linux-gnu/libgeos_c.so.1.13.1
+
+```
+
+```
+cp /usr/lib/x86_64-linux-gnu/libgeos_c* /home/libing/miniconda3/envs/robodiff/lib/
+```
+
+
+下载权限问题
+直接下载好一份，放在本地
+```
+Traceback (most recent call last):
+  File "/home/libing/miniconda3/envs/robodiff/lib/python3.11/site-packages/urllib3/connectionpool.py", line 787, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "/home/libing/miniconda3/envs/robodiff/lib/python3.11/site-packages/urllib3/connectionpool.py", line 534, in _make_request
+    response = conn.getresponse()
+               ^^^^^^^^^^^^^^^^^^
+  File "/home/libing/miniconda3/envs/robodiff/lib/python3.11/site-packages/urllib3/connection.py", line 516, in getresponse
+    httplib_response = super().getresponse()
+                       ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/libing/miniconda3/envs/robodiff/lib/python3.11/http/client.py", line 1395, in getresponse
+    response.begin()
+  File "/home/libing/miniconda3/envs/robodiff/lib/python3.11/http/client.py", line 325, in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+  File "/home/libing/miniconda3/envs/robodiff/lib/python3.11/http/client.py", line 294, in _read_status
+    raise RemoteDisconnected("Remote end closed connection without"
+http.client.RemoteDisconnected: Remote end closed connection without response
+
+During handling of the above exception, another exception occurred:
+
+```
+
+终于跑起来了
+
+![alt text](images/image.png)

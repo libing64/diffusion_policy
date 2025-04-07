@@ -7,18 +7,19 @@ Original file is located at
     https://colab.research.google.com/drive/1gxdkgRVfM55zihY9TFLja97cSVZOZq2B
 """
 
-#@markdown ### **Installing pip packages**
-#@markdown - Diffusion Model: [PyTorch](https://pytorch.org) & [HuggingFace diffusers](https://huggingface.co/docs/diffusers/index)
-#@markdown - Dataset Loading: [Zarr](https://zarr.readthedocs.io/en/stable/) & numcodecs
-#@markdown - Push-T Env: gym, pygame, pymunk & shapely
+# @markdown ### **Installing pip packages**
+# @markdown - Diffusion Model: [PyTorch](https://pytorch.org) & [HuggingFace diffusers](https://huggingface.co/docs/diffusers/index)
+# @markdown - Dataset Loading: [Zarr](https://zarr.readthedocs.io/en/stable/) & numcodecs
+# @markdown - Push-T Env: gym, pygame, pymunk & shapely
 # !python --version
 # !pip3 install torch==1.13.1 torchvision==0.14.1 diffusers==0.18.2 \
 # scikit-image==0.19.3 scikit-video==1.1.11 zarr==2.12.0 numcodecs==0.10.2 \
 # pygame==2.1.2 pymunk==6.2.1 gym==0.26.2 shapely==1.8.4 \
 # &> /dev/null # mute output
 
-#@markdown ### **Imports**
+# @markdown ### **Imports**
 # diffusion policy import
+from huggingface_hub.utils import IGNORE_GIT_FOLDER_PATTERNS
 from typing import Tuple, Sequence, Dict, Union, Optional
 import numpy as np
 import math
@@ -47,12 +48,12 @@ from IPython.display import Video
 import gdown
 import os
 
-#@markdown ### **Environment**
-#@markdown Defines a PyMunk-based Push-T environment `PushTEnv`.
-#@markdown
-#@markdown **Goal**: push the gray T-block into the green area.
-#@markdown
-#@markdown Adapted from [Implicit Behavior Cloning](https://implicitbc.github.io/)
+# @markdown ### **Environment**
+# @markdown Defines a PyMunk-based Push-T environment `PushTEnv`.
+# @markdown
+# @markdown **Goal**: push the gray T-block into the green area.
+# @markdown
+# @markdown Adapted from [Implicit Behavior Cloning](https://implicitbc.github.io/)
 
 
 positive_y_is_up: bool = False
@@ -80,6 +81,7 @@ When False::
 
 """
 
+
 def to_pygame(p: Tuple[float, float], surface: pygame.Surface) -> Tuple[int, int]:
     """Convenience method to convert pymunk coordinates to pygame surface
     local coordinates.
@@ -94,9 +96,11 @@ def to_pygame(p: Tuple[float, float], surface: pygame.Surface) -> Tuple[int, int
 
 
 def light_color(color: SpaceDebugColor):
-    color = np.minimum(1.2 * np.float32([color.r, color.g, color.b, color.a]), np.float32([255]))
+    color = np.minimum(
+        1.2 * np.float32([color.r, color.g, color.b, color.a]), np.float32([255]))
     color = SpaceDebugColor(r=color[0], g=color[1], b=color[2], a=color[3])
     return color
+
 
 class DrawOptions(pymunk.SpaceDebugDrawOptions):
     def __init__(self, surface: pygame.Surface) -> None:
@@ -158,8 +162,10 @@ class DrawOptions(pymunk.SpaceDebugDrawOptions):
     ) -> None:
         p = to_pygame(pos, self.surface)
 
-        pygame.draw.circle(self.surface, fill_color.as_int(), p, round(radius), 0)
-        pygame.draw.circle(self.surface, light_color(fill_color).as_int(), p, round(radius-4), 0)
+        pygame.draw.circle(self.surface, fill_color.as_int(),
+                           p, round(radius), 0)
+        pygame.draw.circle(self.surface, light_color(
+            fill_color).as_int(), p, round(radius-4), 0)
 
         circle_edge = pos + Vec2d(radius, 0).rotated(angle)
         p2 = to_pygame(circle_edge, self.surface)
@@ -184,12 +190,14 @@ class DrawOptions(pymunk.SpaceDebugDrawOptions):
         p2 = to_pygame(b, self.surface)
 
         r = round(max(1, radius * 2))
-        pygame.draw.lines(self.surface, fill_color.as_int(), False, [p1, p2], r)
+        pygame.draw.lines(self.surface, fill_color.as_int(),
+                          False, [p1, p2], r)
         if r > 2:
             orthog = [abs(p2[1] - p1[1]), abs(p2[0] - p1[0])]
             if orthog[0] == 0 and orthog[1] == 0:
                 return
-            scale = radius / (orthog[0] * orthog[0] + orthog[1] * orthog[1]) ** 0.5
+            scale = radius / (orthog[0] * orthog[0] +
+                              orthog[1] * orthog[1]) ** 0.5
             orthog[0] = round(orthog[0] * scale)
             orthog[1] = round(orthog[1] * scale)
             points = [
@@ -251,17 +259,20 @@ def pymunk_to_shapely(body, shapes):
     return geom
 
 # env
+
+
 class PushTEnv(gym.Env):
-    metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 10}
+    metadata = {"render.modes": [
+        "human", "rgb_array"], "video.frames_per_second": 10}
     reward_range = (0., 1.)
 
     def __init__(self,
-            legacy=False,
-            block_cog=None, damping=None,
-            render_action=True,
-            render_size=96,
-            reset_to_state=None
-        ):
+                 legacy=False,
+                 block_cog=None, damping=None,
+                 render_action=True,
+                 render_size=96,
+                 reset_to_state=None
+                 ):
         self._seed = None
         self.seed()
         self.window_size = ws = 512  # The size of the PyGame window
@@ -275,16 +286,16 @@ class PushTEnv(gym.Env):
 
         # agent_pos, block_pos, block_angle
         self.observation_space = spaces.Box(
-            low=np.array([0,0,0,0,0], dtype=np.float64),
-            high=np.array([ws,ws,ws,ws,np.pi*2], dtype=np.float64),
+            low=np.array([0, 0, 0, 0, 0], dtype=np.float64),
+            high=np.array([ws, ws, ws, ws, np.pi*2], dtype=np.float64),
             shape=(5,),
             dtype=np.float64
         )
 
         # positional goal for agent
         self.action_space = spaces.Box(
-            low=np.array([0,0], dtype=np.float64),
-            high=np.array([ws,ws], dtype=np.float64),
+            low=np.array([0, 0], dtype=np.float64),
+            high=np.array([ws, ws], dtype=np.float64),
             shape=(2,),
             dtype=np.float64
         )
@@ -326,7 +337,7 @@ class PushTEnv(gym.Env):
                 rs.randint(50, 450), rs.randint(50, 450),
                 rs.randint(100, 400), rs.randint(100, 400),
                 rs.randn() * 2 * np.pi - np.pi
-                ])
+            ])
         self._set_state(state)
 
         obs = self._get_obs()
@@ -342,7 +353,9 @@ class PushTEnv(gym.Env):
             for i in range(n_steps):
                 # Step PD control.
                 # self.agent.velocity = self.k_p * (act - self.agent.position)    # P control works too.
-                acceleration = self.k_p * (action - self.agent.position) + self.k_v * (Vec2d(0, 0) - self.agent.velocity)
+                acceleration = self.k_p * \
+                    (action - self.agent.position) + self.k_v * \
+                    (Vec2d(0, 0) - self.agent.velocity)
                 self.agent.velocity += acceleration * dt
 
                 # Step physics.
@@ -372,9 +385,11 @@ class PushTEnv(gym.Env):
 
     def teleop_agent(self):
         TeleopAgent = collections.namedtuple('TeleopAgent', ['act'])
+
         def act(obs):
             act = None
-            mouse_position = pymunk.pygame_util.from_pygame(Vec2d(*pygame.mouse.get_pos()), self.screen)
+            mouse_position = pymunk.pygame_util.from_pygame(
+                Vec2d(*pygame.mouse.get_pos()), self.screen)
             if self.teleop or (mouse_position - self.agent.position).length < 30:
                 self.teleop = True
                 act = mouse_position
@@ -383,8 +398,8 @@ class PushTEnv(gym.Env):
 
     def _get_obs(self):
         obs = np.array(
-            tuple(self.agent.position) \
-            + tuple(self.block.position) \
+            tuple(self.agent.position)
+            + tuple(self.block.position)
             + (self.block.angle % (2 * np.pi),))
         return obs
 
@@ -400,7 +415,8 @@ class PushTEnv(gym.Env):
 
     def _get_info(self):
         n_steps = self.sim_hz // self.control_hz
-        n_contact_points_per_step = int(np.ceil(self.n_contact_points / n_steps))
+        n_contact_points_per_step = int(
+            np.ceil(self.n_contact_points / n_steps))
         info = {
             'pos_agent': np.array(self.agent.position),
             'vel_agent': np.array(self.agent.velocity),
@@ -414,7 +430,8 @@ class PushTEnv(gym.Env):
         if self.window is None and mode == "human":
             pygame.init()
             pygame.display.init()
-            self.window = pygame.display.set_mode((self.window_size, self.window_size))
+            self.window = pygame.display.set_mode(
+                (self.window_size, self.window_size))
         if self.clock is None and mode == "human":
             self.clock = pygame.time.Clock()
 
@@ -427,7 +444,8 @@ class PushTEnv(gym.Env):
         # Draw goal pose.
         goal_body = self._get_goal_pose_body(self.goal_pose)
         for shape in self.block.shapes:
-            goal_points = [pymunk.pygame_util.to_pygame(goal_body.local_to_world(v), draw_options.surface) for v in shape.get_vertices()]
+            goal_points = [pymunk.pygame_util.to_pygame(goal_body.local_to_world(
+                v), draw_options.surface) for v in shape.get_vertices()]
             goal_points += [goal_points[0]]
             pygame.draw.polygon(canvas, self.goal_color, goal_points)
 
@@ -442,10 +460,9 @@ class PushTEnv(gym.Env):
 
             # the clock is aleady ticked during in step for "human"
 
-
         img = np.transpose(
-                np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
-            )
+            np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
+        )
         img = cv2.resize(img, (self.render_size, self.render_size))
         if self.render_action:
             if self.render_action and (self.latest_action is not None):
@@ -454,10 +471,9 @@ class PushTEnv(gym.Env):
                 marker_size = int(8/96*self.render_size)
                 thickness = int(1/96*self.render_size)
                 cv2.drawMarker(img, coord,
-                    color=(255,0,0), markerType=cv2.MARKER_CROSS,
-                    markerSize=marker_size, thickness=thickness)
+                               color=(255, 0, 0), markerType=cv2.MARKER_CROSS,
+                               markerSize=marker_size, thickness=thickness)
         return img
-
 
     def close(self):
         if self.window is not None:
@@ -466,7 +482,7 @@ class PushTEnv(gym.Env):
 
     def seed(self, seed=None):
         if seed is None:
-            seed = np.random.randint(0,25536)
+            seed = np.random.randint(0, 25536)
         self._seed = seed
         self.np_random = np.random.default_rng(seed)
 
@@ -510,8 +526,8 @@ class PushTEnv(gym.Env):
         )
         agent_pos_new = tf_img_new(agent_pos_local)
         new_state = np.array(
-            list(agent_pos_new[0]) + list(tf_img_new.translation) \
-                + [tf_img_new.rotation])
+            list(agent_pos_new[0]) + list(tf_img_new.translation)
+            + [tf_img_new.rotation])
         self._set_state(new_state)
         return new_state
 
@@ -535,7 +551,8 @@ class PushTEnv(gym.Env):
         self.agent = self.add_circle((256, 400), 15)
         self.block = self.add_tee((256, 300), 0)
         self.goal_color = pygame.Color('LightGreen')
-        self.goal_pose = np.array([256,256,np.pi/4])  # x, y, theta (in radians)
+        # x, y, theta (in radians)
+        self.goal_pose = np.array([256, 256, np.pi/4])
 
         # Add collision handeling
         self.collision_handeler = self.space.add_collision_handler(0, 0)
@@ -547,7 +564,8 @@ class PushTEnv(gym.Env):
 
     def _add_segment(self, a, b, radius):
         shape = pymunk.Segment(self.space.static_body, a, b, radius)
-        shape.color = pygame.Color('LightGray')    # https://htmlcolorcodes.com/color-names
+        # https://htmlcolorcodes.com/color-names
+        shape.color = pygame.Color('LightGray')
         return shape
 
     def add_circle(self, position, radius):
@@ -573,14 +591,14 @@ class PushTEnv(gym.Env):
         mass = 1
         length = 4
         vertices1 = [(-length*scale/2, scale),
-                                 ( length*scale/2, scale),
-                                 ( length*scale/2, 0),
-                                 (-length*scale/2, 0)]
+                     (length*scale/2, scale),
+                     (length*scale/2, 0),
+                     (-length*scale/2, 0)]
         inertia1 = pymunk.moment_for_poly(mass, vertices=vertices1)
         vertices2 = [(-scale/2, scale),
-                                 (-scale/2, length*scale),
-                                 ( scale/2, length*scale),
-                                 ( scale/2, scale)]
+                     (-scale/2, length*scale),
+                     (scale/2, length*scale),
+                     (scale/2, scale)]
         inertia2 = pymunk.moment_for_poly(mass, vertices=vertices1)
         body = pymunk.Body(mass, inertia1 + inertia2)
         shape1 = pymunk.Poly(body, vertices1)
@@ -589,16 +607,17 @@ class PushTEnv(gym.Env):
         shape2.color = pygame.Color(color)
         shape1.filter = pymunk.ShapeFilter(mask=mask)
         shape2.filter = pymunk.ShapeFilter(mask=mask)
-        body.center_of_gravity = (shape1.center_of_gravity + shape2.center_of_gravity) / 2
+        body.center_of_gravity = (
+            shape1.center_of_gravity + shape2.center_of_gravity) / 2
         body.position = position
         body.angle = angle
         body.friction = 1
         self.space.add(body, shape1, shape2)
         return body
 
-from huggingface_hub.utils import IGNORE_GIT_FOLDER_PATTERNS
-#@markdown ### **Env Demo**
-#@markdown Standard Gym Env (0.21.0 API)
+
+# @markdown ### **Env Demo**
+# @markdown Standard Gym Env (0.21.0 API)
 
 # 0. create env object
 env = PushTEnv()
@@ -619,26 +638,28 @@ obs, reward, terminated, truncated, info = env.step(action)
 # prints and explains each dimension of the observation and action vectors
 with np.printoptions(precision=4, suppress=True, threshold=5):
     print("Obs: ", repr(obs))
-    print("Obs:        [agent_x,  agent_y,  block_x,  block_y,    block_angle]")
+    print(
+        "Obs:        [agent_x,  agent_y,  block_x,  block_y,    block_angle]")
     print("Action: ", repr(action))
     print("Action:   [target_agent_x, target_agent_y]")
 
-#@markdown ### **Dataset**
-#@markdown
-#@markdown Defines `PushTStateDataset` and helper functions
-#@markdown
-#@markdown The dataset class
-#@markdown - Load data (obs, action) from a zarr storage
-#@markdown - Normalizes each dimension of obs and action to [-1,1]
-#@markdown - Returns
-#@markdown  - All possible segments with length `pred_horizon`
-#@markdown  - Pads the beginning and the end of each episode with repetition
-#@markdown  - key `obs`: shape (obs_horizon, obs_dim)
-#@markdown  - key `action`: shape (pred_horizon, action_dim)
+# @markdown ### **Dataset**
+# @markdown
+# @markdown Defines `PushTStateDataset` and helper functions
+# @markdown
+# @markdown The dataset class
+# @markdown - Load data (obs, action) from a zarr storage
+# @markdown - Normalizes each dimension of obs and action to [-1,1]
+# @markdown - Returns
+# @markdown  - All possible segments with length `pred_horizon`
+# @markdown  - Pads the beginning and the end of each episode with repetition
+# @markdown  - key `obs`: shape (obs_horizon, obs_dim)
+# @markdown  - key `action`: shape (pred_horizon, action_dim)
+
 
 def create_sample_indices(
-        episode_ends:np.ndarray, sequence_length:int,
-        pad_before: int=0, pad_after: int=0):
+        episode_ends: np.ndarray, sequence_length: int,
+        pad_before: int = 0, pad_after: int = 0):
     indices = list()
     for i in range(len(episode_ends)):
         start_idx = 0
@@ -653,7 +674,8 @@ def create_sample_indices(
         # range stops one idx before end
         for idx in range(min_start, max_start+1):
             buffer_start_idx = max(idx, 0) + start_idx
-            buffer_end_idx = min(idx+sequence_length, episode_length) + start_idx
+            buffer_end_idx = min(idx+sequence_length,
+                                 episode_length) + start_idx
             start_offset = buffer_start_idx - (idx+start_idx)
             end_offset = (idx+sequence_length+start_idx) - buffer_end_idx
             sample_start_idx = 0 + start_offset
@@ -685,13 +707,16 @@ def sample_sequence(train_data, sequence_length,
     return result
 
 # normalize data
+
+
 def get_data_stats(data):
-    data = data.reshape(-1,data.shape[-1])
+    data = data.reshape(-1, data.shape[-1])
     stats = {
         'min': np.min(data, axis=0),
         'max': np.max(data, axis=0)
     }
     return stats
+
 
 def normalize_data(data, stats):
     # nomalize to [0,1]
@@ -700,12 +725,15 @@ def normalize_data(data, stats):
     ndata = ndata * 2 - 1
     return ndata
 
+
 def unnormalize_data(ndata, stats):
     ndata = (ndata + 1) / 2
     data = ndata * (stats['max'] - stats['min']) + stats['min']
     return data
 
 # dataset
+
+
 class PushTStateDataset(torch.utils.data.Dataset):
     def __init__(self, dataset_path,
                  pred_horizon, obs_horizon, action_horizon):
@@ -765,10 +793,11 @@ class PushTStateDataset(torch.utils.data.Dataset):
         )
 
         # discard unused observations
-        nsample['obs'] = nsample['obs'][:self.obs_horizon,:]
+        nsample['obs'] = nsample['obs'][:self.obs_horizon, :]
         return nsample
 
-#@markdown ### **Dataset Demo**
+# @markdown ### **Dataset Demo**
+
 
 # download demonstration data from Google Drive
 dataset_path = "pusht_cchi_v7_replay.zarr.zip"
@@ -780,9 +809,9 @@ if not os.path.isfile(dataset_path):
 pred_horizon = 16
 obs_horizon = 2
 action_horizon = 8
-#|o|o|                             observations: 2
-#| |a|a|a|a|a|a|a|a|               actions executed: 8
-#|p|p|p|p|p|p|p|p|p|p|p|p|p|p|p|p| actions predicted: 16
+# |o|o|                             observations: 2
+# | |a|a|a|a|a|a|a|a|               actions executed: 8
+# |p|p|p|p|p|p|p|p|p|p|p|p|p|p|p|p| actions predicted: 16
 
 # create dataset from file
 dataset = PushTStateDataset(
@@ -811,19 +840,20 @@ batch = next(iter(dataloader))
 print("batch['obs'].shape:", batch['obs'].shape)
 print("batch['action'].shape", batch['action'].shape)
 
-#@markdown ### **Network**
-#@markdown
-#@markdown Defines a 1D UNet architecture `ConditionalUnet1D`
-#@markdown as the noies prediction network
-#@markdown
-#@markdown Components
-#@markdown - `SinusoidalPosEmb` Positional encoding for the diffusion iteration k
-#@markdown - `Downsample1d` Strided convolution to reduce temporal resolution
-#@markdown - `Upsample1d` Transposed convolution to increase temporal resolution
-#@markdown - `Conv1dBlock` Conv1d --> GroupNorm --> Mish
-#@markdown - `ConditionalResidualBlock1D` Takes two inputs `x` and `cond`. \
-#@markdown `x` is passed through 2 `Conv1dBlock` stacked together with residual connection.
-#@markdown `cond` is applied to `x` with [FiLM](https://arxiv.org/abs/1709.07871) conditioning.
+# @markdown ### **Network**
+# @markdown
+# @markdown Defines a 1D UNet architecture `ConditionalUnet1D`
+# @markdown as the noies prediction network
+# @markdown
+# @markdown Components
+# @markdown - `SinusoidalPosEmb` Positional encoding for the diffusion iteration k
+# @markdown - `Downsample1d` Strided convolution to reduce temporal resolution
+# @markdown - `Upsample1d` Transposed convolution to increase temporal resolution
+# @markdown - `Conv1dBlock` Conv1d --> GroupNorm --> Mish
+# @markdown - `ConditionalResidualBlock1D` Takes two inputs `x` and `cond`. \
+# @markdown `x` is passed through 2 `Conv1dBlock` stacked together with residual connection.
+# @markdown `cond` is applied to `x` with [FiLM](https://arxiv.org/abs/1709.07871) conditioning.
+
 
 class SinusoidalPosEmb(nn.Module):
     def __init__(self, dim):
@@ -848,6 +878,7 @@ class Downsample1d(nn.Module):
     def forward(self, x):
         return self.conv(x)
 
+
 class Upsample1d(nn.Module):
     def __init__(self, dim):
         super().__init__()
@@ -866,7 +897,8 @@ class Conv1dBlock(nn.Module):
         super().__init__()
 
         self.block = nn.Sequential(
-            nn.Conv1d(inp_channels, out_channels, kernel_size, padding=kernel_size // 2),
+            nn.Conv1d(inp_channels, out_channels,
+                      kernel_size, padding=kernel_size // 2),
             nn.GroupNorm(n_groups, out_channels),
             nn.Mish(),
         )
@@ -877,16 +909,18 @@ class Conv1dBlock(nn.Module):
 
 class ConditionalResidualBlock1D(nn.Module):
     def __init__(self,
-            in_channels,
-            out_channels,
-            cond_dim,
-            kernel_size=3,
-            n_groups=8):
+                 in_channels,
+                 out_channels,
+                 cond_dim,
+                 kernel_size=3,
+                 n_groups=8):
         super().__init__()
 
         self.blocks = nn.ModuleList([
-            Conv1dBlock(in_channels, out_channels, kernel_size, n_groups=n_groups),
-            Conv1dBlock(out_channels, out_channels, kernel_size, n_groups=n_groups),
+            Conv1dBlock(in_channels, out_channels,
+                        kernel_size, n_groups=n_groups),
+            Conv1dBlock(out_channels, out_channels,
+                        kernel_size, n_groups=n_groups),
         ])
 
         # FiLM modulation https://arxiv.org/abs/1709.07871
@@ -916,8 +950,8 @@ class ConditionalResidualBlock1D(nn.Module):
 
         embed = embed.reshape(
             embed.shape[0], 2, self.out_channels, 1)
-        scale = embed[:,0,...]
-        bias = embed[:,1,...]
+        scale = embed[:, 0, ...]
+        bias = embed[:, 1, ...]
         out = scale * out + bias
 
         out = self.blocks[1](out)
@@ -927,13 +961,13 @@ class ConditionalResidualBlock1D(nn.Module):
 
 class ConditionalUnet1D(nn.Module):
     def __init__(self,
-        input_dim,
-        global_cond_dim,
-        diffusion_step_embed_dim=256,
-        down_dims=[256,512,1024],
-        kernel_size=5,
-        n_groups=8
-        ):
+                 input_dim,
+                 global_cond_dim,
+                 diffusion_step_embed_dim=256,
+                 down_dims=[256, 512, 1024],
+                 kernel_size=5,
+                 n_groups=8
+                 ):
         """
         input_dim: Dim of actions.
         global_cond_dim: Dim of global conditioning applied with FiLM
@@ -1012,9 +1046,9 @@ class ConditionalUnet1D(nn.Module):
         )
 
     def forward(self,
-            sample: torch.Tensor,
-            timestep: Union[torch.Tensor, float, int],
-            global_cond=None):
+                sample: torch.Tensor,
+                timestep: Union[torch.Tensor, float, int],
+                global_cond=None):
         """
         x: (B,T,input_dim)
         timestep: (B,) or int, diffusion step
@@ -1022,14 +1056,15 @@ class ConditionalUnet1D(nn.Module):
         output: (B,T,input_dim)
         """
         # (B,T,C)
-        sample = sample.moveaxis(-1,-2)
+        sample = sample.moveaxis(-1, -2)
         # (B,C,T)
 
         # 1. time
         timesteps = timestep
         if not torch.is_tensor(timesteps):
             # TODO: this requires sync between CPU and GPU. So try to pass timesteps as tensors if you can
-            timesteps = torch.tensor([timesteps], dtype=torch.long, device=sample.device)
+            timesteps = torch.tensor(
+                [timesteps], dtype=torch.long, device=sample.device)
         elif torch.is_tensor(timesteps) and len(timesteps.shape) == 0:
             timesteps = timesteps[None].to(sample.device)
         # broadcast to batch dimension in a way that's compatible with ONNX/Core ML
@@ -1062,11 +1097,12 @@ class ConditionalUnet1D(nn.Module):
         x = self.final_conv(x)
 
         # (B,C,T)
-        x = x.moveaxis(-1,-2)
+        x = x.moveaxis(-1, -2)
         # (B,T,C)
         return x
 
-#@markdown ### **Network Demo**
+# @markdown ### **Network Demo**
+
 
 # observation and action dimensions corrsponding to
 # the output of PushTEnv
@@ -1114,12 +1150,12 @@ noise_scheduler = DDPMScheduler(
 device = torch.device('cuda')
 _ = noise_pred_net.to(device)
 
-#@markdown ### **Training**
-#@markdown
-#@markdown Takes about an hour. If you don't want to wait, skip to the next cell
-#@markdown to load pre-trained weights
+# @markdown ### **Training**
+# @markdown
+# @markdown Takes about an hour. If you don't want to wait, skip to the next cell
+# @markdown to load pre-trained weights
 
-num_epochs = 10
+num_epochs = 5
 
 # Exponential Moving Average
 # accelerates training and improves stability
@@ -1157,7 +1193,7 @@ with tqdm(range(num_epochs), desc='Epoch') as tglobal:
 
                 # observation as FiLM conditioning
                 # (B, obs_horizon, obs_dim)
-                obs_cond = nobs[:,:obs_horizon,:]
+                obs_cond = nobs[:, :obs_horizon, :]
                 # (B, obs_horizon * obs_dim)
                 obs_cond = obs_cond.flatten(start_dim=1)
 
@@ -1204,24 +1240,24 @@ with tqdm(range(num_epochs), desc='Epoch') as tglobal:
 ema_noise_pred_net = noise_pred_net
 ema.copy_to(ema_noise_pred_net.parameters())
 
-#@markdown ### **Loading Pretrained Checkpoint**
-#@markdown Set `load_pretrained = True` to load pretrained weights.
+# @markdown ### **Loading Pretrained Checkpoint**
+# @markdown Set `load_pretrained = True` to load pretrained weights.
 
 load_pretrained = False
 if load_pretrained:
-  ckpt_path = "pusht_state_100ep.ckpt"
-  if not os.path.isfile(ckpt_path):
-      id = "1mHDr_DEZSdiGo9yecL50BBQYzR8Fjhl_&confirm=t"
-      gdown.download(id=id, output=ckpt_path, quiet=False)
+    ckpt_path = "pusht_state_100ep.ckpt"
+    if not os.path.isfile(ckpt_path):
+        id = "1mHDr_DEZSdiGo9yecL50BBQYzR8Fjhl_&confirm=t"
+        gdown.download(id=id, output=ckpt_path, quiet=False)
 
-  state_dict = torch.load(ckpt_path, map_location='cuda')
-  ema_noise_pred_net = noise_pred_net
-  ema_noise_pred_net.load_state_dict(state_dict)
-  print('Pretrained weights loaded.')
+    state_dict = torch.load(ckpt_path, map_location='cuda')
+    ema_noise_pred_net = noise_pred_net
+    ema_noise_pred_net.load_state_dict(state_dict)
+    print('Pretrained weights loaded.')
 else:
-  print("Skipped pretrained weight loading.")
+    print("Skipped pretrained weight loading.")
 
-#@markdown ### **Inference**
+# @markdown ### **Inference**
 
 # limit enviornment interaction to 200 steps before termination
 max_steps = 200
@@ -1288,7 +1324,7 @@ with tqdm(total=max_steps, desc="Eval PushTStateEnv") as pbar:
         # only take action_horizon number of actions
         start = obs_horizon - 1
         end = start + action_horizon
-        action = action_pred[start:end,:]
+        action = action_pred[start:end, :]
         # (action_horizon, action_dim)
 
         # execute action_horizon number of steps
@@ -1315,6 +1351,5 @@ with tqdm(total=max_steps, desc="Eval PushTStateEnv") as pbar:
 print('Score: ', max(rewards))
 
 # visualize
-from IPython.display import Video
 vwrite('vis.mp4', imgs)
 Video('vis.mp4', embed=True, width=256, height=256)
