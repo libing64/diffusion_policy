@@ -160,3 +160,24 @@ During handling of the above exception, another exception occurred:
 终于跑起来了
 
 ![alt text](images/image.png)
+
+
+# pusht_demo
+手动推小球，可以感受下这个动作
+```
+python demo_pusht.py -o pusht_output
+```
+
+对鼠标的控制，经过PD control转化为agent的速度, 然后用这个速度去更新pymunk env中的物理模型
+
+# 观测有哪些？
+agent位置, block位置和block角度
+[agent_x, agent_y, block_pos_x, block_pos_y, block_angle]
+目标位置不需要放入观测吗？
+
+![alt text](images/image-1.png)
+
+
+block的目标位置goal_pos是写死的
+# x, y, theta (in radians)
+self.goal_pose = np.array([256, 256, np.pi/4])
