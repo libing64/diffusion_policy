@@ -181,3 +181,18 @@ agent位置, block位置和block角度
 block的目标位置goal_pos是写死的
 # x, y, theta (in radians)
 self.goal_pose = np.array([256, 256, np.pi/4])
+
+
+# action之间的约束关系？
+pred_horizon = 16 
+action_dim = 2
+key `action`: shape (pred_horizon, action_dim)
+
+
+# 过程
+
+![alt text](images/image-2.png)
+
+![alt text](images/image-3.png)
+
+![alt text](images/image-4.png)

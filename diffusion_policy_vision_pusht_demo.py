@@ -354,6 +354,10 @@ class PushTEnv(gym.Env):
         goal_body = self._get_goal_pose_body(self.goal_pose)
         goal_geom = pymunk_to_shapely(goal_body, self.block.shapes)
         block_geom = pymunk_to_shapely(self.block, self.block.shapes)
+        
+        # fix invalid geometry
+        goal_geom = goal_geom.buffer(0)
+        block_geom = block_geom.buffer(0)
 
         intersection_area = goal_geom.intersection(block_geom).area
         goal_area = goal_geom.area
@@ -1514,5 +1518,5 @@ print('Score: ', max(rewards))
 
 # visualize
 from IPython.display import Video
-vwrite('vis.mp4', imgs)
-Video('vis.mp4', embed=True, width=256, height=256)
+vwrite('diffusion_policy_vision_vis.mp4', imgs)
+Video('diffusion_policy_vision_vis.mp4', embed=True, width=256, height=256)
