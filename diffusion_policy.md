@@ -196,3 +196,8 @@ key `action`: shape (pred_horizon, action_dim)
 ![alt text](images/image-3.png)
 
 ![alt text](images/image-4.png)
+
+
+# SED & ODE
+这里有篇文章讲解的非常好
+https://zhuanlan.zhihu.com/p/698737562
