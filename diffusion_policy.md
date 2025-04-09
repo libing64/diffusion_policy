@@ -201,3 +201,9 @@ key `action`: shape (pred_horizon, action_dim)
 # SED & ODE
 这里有篇文章讲解的非常好
 https://zhuanlan.zhihu.com/p/698737562
+
+# diffusion如何有观测怎么放进去？ 有文字提示怎么放进去？
+
+普通的diffusion_model: model(x, step)
+带观测的情况? model(x, obs)
+obs取代了step之前所在的位置?
